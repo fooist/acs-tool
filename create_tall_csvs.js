@@ -2,9 +2,15 @@ const fs = require('fs')
 const Papa = require('papaparse')
 const cliProgress = require('cli-progress')
 
-const headerDir = '../headers/'
-const dataDir = '../combinedFiles/'
-const outputDir = '../tallFiles/'
+
+// TODO: make these into command line params
+let year = 2018
+let acsYears = 1
+
+
+const headerDir = `./data/processed/acs/${year}_${acsYears}_yr/headers/`
+const dataDir = `./data/processed/acs/${year}_${acsYears}_yr/combined/`
+const outputDir = `./data/processed/acs/${year}_${acsYears}_yr/tall/`
 
 const fieldsFile = outputDir + 'fields.csv'
 const dataFile = outputDir + 'data.csv'

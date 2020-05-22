@@ -1,8 +1,12 @@
 const fs = require('fs')
 const cliProgress = require('cli-progress')
 
-const dataPath = '../All_Geographies/'
-const outputPath = '../combinedFiles/'
+let year = 2018
+let acsYears = 1
+
+// TODO: parameterize this
+const dataPath = `./data/raw/acs/${year}_${acsYears}_yr/data/`
+const outputPath = `./data/processed/acs/${year}_${acsYears}_yr/combined/`
 
 console.log('preparing output directory...')
 try {

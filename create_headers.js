@@ -1,8 +1,11 @@
 const XLSX = require('xlsx')
 const fs = require('fs')
 
-let templatePath = './data/raw/2018_1yr_Summary_FileTemplates/'
-let outputPath = './data/headers/'
+let year = 2018
+let acsYears = 1
+
+let templatePath = `./data/raw/acs/${year}_${acsYears}_yr/templates/`
+let outputPath = `./data/processed/acs/${year}_${acsYears}_yr/headers/`
 
 let templates = fs.readdirSync(templatePath)
   .filter(d => d.endsWith('xlsx'))
