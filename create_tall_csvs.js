@@ -25,8 +25,8 @@ try {
   fs.mkdirSync(outputDir)
 } catch {}
 
-  const fieldsFD = fs.openSync(fieldsFile, 'w', {encoding: 'utf8'})
-  const dataFD = fs.openSync(dataFile, 'w', {encoding: 'utf8'})
+  const fieldsFD = fs.openSync(fieldsFile, 'w')
+  const dataFD = fs.openSync(dataFile, 'w')
 
 const inputDataFiles = fs.readdirSync(dataDir)
 
@@ -67,7 +67,7 @@ for (i in inputDataFiles) {
 
   // open the data file with papaparse and use step function to split
   // up each row
-  const data = fs.readFileSync(dataDir + filename, {encoding: 'utf8'})
+  const data = fs.readFileSync(dataDir + filename, {encoding:'utf8'})
   Papa.parse(data, {
     //worker: true,
     step: function (row) {
