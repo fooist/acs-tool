@@ -3,6 +3,7 @@
 # make sure the directory I want is there
 # should throw an error and quit if it doesn't work
 mkdir -p data/raw/acs/$1_$2_yr/data
+mkdir -p data/raw/acs/$1_$2_yr/geo
 mkdir -p data/raw/acs/$1_$2_yr/templates
 
 # create all the output directories I'm gonna need
@@ -52,6 +53,10 @@ fi
 	
 	
 curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$1_$2yr_Summary_FileTemplates.zip  > data/raw/acs/$1_$2_yr_templates.zip
+curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/$1_ACS_Geography_Files.zip >  data/raw/acs/$1_$2_yr_geography.zip
+
 
 #unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr.zip
 unzip -j -d data/raw/acs/$1_$2_yr/templates data/raw/acs/$1_$2_yr_templates.zip
+unzip -j -d  data/raw/acs/$1_$2_yr/geo data/raw/acs/$1_$2_yr_geography.zip
+
