@@ -13,35 +13,35 @@ mkdir -p data/processed/acs/$1_$2_yr/tall
 # try the formats for the 1 and 5 yr ACS files then fail
 
 echo "Check for /All_Geographies.zip"
-has_all_zip=`curl --silent --head https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies.zip|head -n 1`
+has_all_zip=`curl -m 60 --silent --head https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies.zip|head -n 1`
 
 echo "Check for /All_Geographies.tar"
-has_all_tar=`curl --silent --head https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies.tar|head -n 1`
+has_all_tar=`curl -m 60 --silent --head https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies.tar|head -n 1`
 
 
 
 echo "Check for /All_Geographies_Not_Tracts_Block_Groups.zip"
-has_no_tracts_zip=`curl --silent --head https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.zip|head -n 1`
+has_no_tracts_zip=`curl -m 60 --silent --head https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.zip|head -n 1`
 
 echo "Check for /All_Geographies_Not_Tracts_Block_Groups.tar"
-#has_no_tracts_tar=`curl --silent --head https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.tar|head -n 1`
+has_no_tracts_tar=`curl -m 60 --silent --head https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.tar|head -n 1`
 
 echo $has_no_tracts_tar
 
-if [[ $has_no_tracts_zip == *"200"* ]]; then
+if [[ $has_no_tracts_zip != *"404"* ]]; then
     echo "downloading no_tracts zipfile"
     curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.zip > data/raw/acs/$1_$2_yr.zip 
     unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr.zip
 
-elif [[ $has_no_tracts_tar == *"200"* ]]; then
+elif [[ "$has_no_tracts_tar" != *"404"* ]]; then
 	echo "downloading no_tracts tarfile"
 	 curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.tar > data/raw/acs/$1_$2_yr.tar
 	 gtar -xf data/raw/acs/$1_$2_yr.tar -C data/raw/acs/$1_$2_yr/data
-elif [[ $has_all_zip == *"200"* ]]; then
+elif [[ "$has_all_zip" != *"404"* ]]; then
     echo "downloading all geographies zipfile"
     curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies.zip > data/raw/acs/$1_$2_yr.zip
     unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr.zip
-elif [[ $has_all_tar == *"200"* ]]; then
+elif [[ "$has_all_tar" != *"404"* ]]; then
 	echo "downloading all geographies tarfile"
 	curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies.tar > data/raw/acs/$1_$2_yr.tar
        gtar -xf data/raw/acs/$1_$2_yr.tar -C data/raw/acs/$1_$2_yr/data
