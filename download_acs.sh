@@ -34,13 +34,20 @@ if [[ $has_no_tracts_zip != *"404"* ]]; then
     curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.zip > data/raw/acs/$1_$2_yr.zip 
     unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr.zip
 
+curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/$1_ACS_Geography_Files.zip >  data/raw/acs/$1_$2_yr_geography.zip
+unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr_geography.zip
+
 elif [[ "$has_no_tracts_tar" != *"404"* ]]; then
 	echo "downloading no_tracts tarfile"
 	 curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.tar > data/raw/acs/$1_$2_yr.tar
 	 gtar -xf data/raw/acs/$1_$2_yr.tar -C data/raw/acs/$1_$2_yr/data
-elif [[ "$has_all_zip" != *"404"* ]]; then
+
+curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/$1_ACS_Geography_Files.zip >  data/raw/acs/$1_$2_yr_geography.zip
+unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr_geography.zip
+
+ elif [[ "$has_all_zip" != *"404"* ]]; then
     echo "downloading all geographies zipfile"
-    curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies.zip > data/raw/acs/$1_$2_yr.zip
+    #curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies.zip > data/raw/acs/$1_$2_yr.zip
     unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr.zip
 elif [[ "$has_all_tar" != *"404"* ]]; then
 	echo "downloading all geographies tarfile"
@@ -53,10 +60,5 @@ fi
 	
 	
 curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$1_$2yr_Summary_FileTemplates.zip  > data/raw/acs/$1_$2_yr_templates.zip
-curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/$1_ACS_Geography_Files.zip >  data/raw/acs/$1_$2_yr_geography.zip
-
-
-#unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr.zip
-unzip -j -d data/raw/acs/$1_$2_yr/templates data/raw/acs/$1_$2_yr_templates.zip
-unzip -j -d  data/raw/acs/$1_$2_yr/geo data/raw/acs/$1_$2_yr_geography.zip
+unzip -j -d  data/raw/acs/$1_$2_yr/templates data/raw/acs/$1_$2_yr_templates.zip
 
