@@ -32,7 +32,7 @@ has_no_tracts_targz=`curl -m 60 --silent --head https://www2.census.gov/programs
 
 if [[ $has_no_tracts_zip != *"404"* ]]; then
     echo "downloading no_tracts zipfile"
-    curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.zip > data/raw/acs/$1_$2_yr.zip 
+    curl ftp://ftp2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.zip > data/raw/acs/$1_$2_yr.zip 
     unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr.zip
 
 curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/$1_ACS_Geography_Files.zip >  data/raw/acs/$1_$2_yr_geography.zip
