@@ -1,8 +1,18 @@
 const XLSX = require('xlsx')
 const fs = require('fs')
 
-let year = 2018
-let acsYears = 1
+
+
+let year = process.argv[2]
+let acsYears = process.argv[3]
+
+
+if (year == null || acsYears == null) {
+  console.log('Syntax: node create_headers.js YEAR ACSTYPE')
+  process.exit()
+}
+
+console.log(`Attemtping to generaqte header files for the ${year} ${acsYears} ACS data`)
 
 let templatePath = `./data/raw/acs/${year}_${acsYears}_yr/templates/`
 let outputPath = `./data/processed/acs/${year}_${acsYears}_yr/headers/`

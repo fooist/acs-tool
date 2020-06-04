@@ -27,7 +27,8 @@ has_no_tracts_zip=`curl -m 60 --silent --head https://www2.census.gov/programs-s
 echo "Check for /All_Geographies_Not_Tracts_Block_Groups.tar"
 has_no_tracts_tar=`curl -m 60 --silent --head https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.tar|head -n 1`
 
-echo $has_no_tracts_tar
+echo "check for /All_Geographies_Not_Tracts_Block_Groups.tar.gz"
+has_no_tracts_targz=`curl -m 60 --silent --head https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.tar.gz|head -n 1`
 
 if [[ $has_no_tracts_zip != *"404"* ]]; then
     echo "downloading no_tracts zipfile"
@@ -37,14 +38,21 @@ if [[ $has_no_tracts_zip != *"404"* ]]; then
 curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/$1_ACS_Geography_Files.zip >  data/raw/acs/$1_$2_yr_geography.zip
 unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr_geography.zip
 
-elif [[ "$has_no_tracts_tar" != *"404"* ]]; then
-	echo "downloading no_tracts tarfile"
+elif [[ "$has_no_tracts_targz" != *"404"* ]]; then
+	echo "downloading no_tracts tar.gz file"
+
+	 curl ftp://ftp2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.tar.gz > data/raw/acs/$1_$2_yr.tar.gz
+	 gtar -xzf data/raw/acs/$1_$2_yr.tar.gz -C data/raw/acs/$1_$2_yr/data
+
+curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/$1_ACS_Geography_Files.zip >  data/raw/acs/$1_$2_yr_geography.zip
+unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr_geography.zip
+
+ elif [[ "$has_no_tracts_tar" != *"404"* ]]; then
 	 curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies_Not_Tracts_Block_Groups.tar > data/raw/acs/$1_$2_yr.tar
 	 gtar -xf data/raw/acs/$1_$2_yr.tar -C data/raw/acs/$1_$2_yr/data
 
 curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/$1_ACS_Geography_Files.zip >  data/raw/acs/$1_$2_yr_geography.zip
 unzip -j -d data/raw/acs/$1_$2_yr/data data/raw/acs/$1_$2_yr_geography.zip
-
  elif [[ "$has_all_zip" != *"404"* ]]; then
     echo "downloading all geographies zipfile"
     #curl https://www2.census.gov/programs-surveys/acs/summary_file/$1/data/$2_year_entire_sf/All_Geographies.zip > data/raw/acs/$1_$2_yr.zip
