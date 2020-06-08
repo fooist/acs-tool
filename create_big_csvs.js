@@ -1,10 +1,15 @@
 const fs = require('fs')
 const cliProgress = require('cli-progress')
 
-let year = 2018
-let acsYears = 1
 
-// TODO: parameterize this
+let year = process.argv[2]
+let acsYears = process.argv[3]
+
+if (year == null || acsYears == null) {
+  console.log('Syntax: node create_headers.js YEAR ACSTYPE')
+  process.exit()
+}
+
 const dataPath = `./data/raw/acs/${year}_${acsYears}_yr/data/`
 const outputPath = `./data/processed/acs/${year}_${acsYears}_yr/combined/`
 
