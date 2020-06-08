@@ -18,7 +18,7 @@ let templatePath = `./data/raw/acs/${year}_${acsYears}_yr/templates/`
 let outputPath = `./data/processed/acs/${year}_${acsYears}_yr/headers/`
 
 let templates = fs.readdirSync(templatePath)
-  .filter(d => d.endsWith('xlsx'))
+  .filter(d => d.endsWith('xlsx')||d.endsWith('xls'))
 
 try {
   fs.mkdirSync(outputPath)
