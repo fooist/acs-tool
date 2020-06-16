@@ -3,10 +3,13 @@ const Papa = require('papaparse')
 const cliProgress = require('cli-progress')
 
 
-// TODO: make these into command line params
-let year = 2018
-let acsYears = 1
+let year = process.argv[2]
+let acsYears = process.argv[3]
 
+if (year == null || acsYears == null) {
+  console.log('Syntax: node create_headers.js YEAR ACSTYPE')
+  process.exit()
+}
 
 const headerDir = `./data/processed/acs/${year}_${acsYears}_yr/headers/`
 const dataDir = `./data/processed/acs/${year}_${acsYears}_yr/combined/`
