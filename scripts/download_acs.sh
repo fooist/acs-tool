@@ -1,6 +1,9 @@
 #!/bin/bash
 
+
+
 # make sure the directory I want is there
+# should be run from main directory, not scripts
 # should throw an error and quit if it doesn't work
 mkdir -p data/raw/acs/$1_$2_yr/data
 mkdir -p data/raw/acs/$1_$2_yr/geo
