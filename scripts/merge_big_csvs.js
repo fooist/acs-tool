@@ -14,9 +14,13 @@ if (year == null || acsYears == null) {
 
 
 // useful constants
-const inputPat = `./data/processed/acs/${year}_${acsYears}_yr/combined/`
+const inputPath = `./data/processed/acs/${year}_${acsYears}_yr/combined/`
+const headerPath = `./data/processed/acs/${year}_${acsYears}_yr/headers/`
 const outputPath =`./data/processed/acs/${year}_${acsYears}_yr/wide/`
 
+
+// important variables
+let data = [] // the main dataset to be written out at the end
 
 
 // prepare the output directory
@@ -32,82 +36,82 @@ try {
 }
 
 
-// get the list of datafiles, but make sure geography is first
-const dataFiles = fs.readdirSync(dataPath)
+// get the list of datafiles, but put geography first
+const dataFiles = fs.readdirSync(inputPath)
   .filter(d => d.endsWith('.csv')&& d != 'geography.csv')
-  .unshift('geography.csv)
+dataFiles.unshift('geography.csv')
+console.log(dataFiles)
+// set up a progress bar to measure based on # of files including geo
+const progressBar = new cliProgress.SingleBar({etaBuffer:10}, cliProgress.Presets.shades_classic)
 
+// display the bar
 console.log(`processing ${dataFiles.length} data files...`)
-
-const progressBar = new cliProgress.SingleBar({etaBuffer:1000}, cliProgress.Presets.shades_classic)
-
 progressBar.start(dataFiles.length,0)
 
-let data = []
 
-for (i in dataFiles) {
+// loop through the rows of each file to combine rows
+for (filename of dataFiles) {
+  const hText = fs.readFileSync(headerPath + filename, 'latin1')
+  const dText = fs.readFileSync(inputPath + filename, 'latin1')
+  const dataType = filename.slice(0,1)
+  // rows is a variable because we'll be popping things out of it
+  let rows = d3.csvParseRows(hText + dText)
 
-  // extract data from filename
-  const filename = dataFiles[i]
-  const dataType = filename.substr(0,1)
-  const dataSequence = filename.substr(5, 4)
-
-  // convert to array of objects
-  const text = fs.readFileSync(${inputPath}${filename})
-  let objects = d3.csvParse(text)
-
-  // make object keys "e" for estimate or "m" for margin or error
-  objects.columns = object.columns.map(d => columnRenamer(d, dataType))
-  objects.map(d => objectColumnRenamer(d, dataType))
-
-
-  // add them to the list of objects
+  // for the first file (geography) just make it the dataset
   if (data.length == 0) {
-    data = objects
-  // else we're going to (painfully slowly) merge the files
-  } else {
-    data.columns =
-    for (i in data) {
-      const d = _.union(data[i].columns, o.colums)
-
-      // find the matching data object
-      const oIndex = objects.findIndex(el => {
-        el.FILEID == o.FILEID &&
-        el.STUSAB == o.STUSAB &&
-        el.CHARITER == o.CHARITER &&
-        el.LOGRECNO == o.LOGRECNO
-      })
-
-      // if there's a match get it and merge it
-      if (oIndex != -1) {
-        const o = objects.splice(oIndex, 1)
-        data[i] = Object.merge(d, o)
-      }
-    }
+    data = rows
+    continue // skip the rest of the loop
   }
-  progressBar.increment()
+
+  for (i in data) {
+
+    // get the keys to match
+    let fileid = data[i][0]  // FILEID from the original file
+    let stusab = data[i][1]   // STUSB from the original file
+    let logrecno = data[i][4] // LOGRECNO from the original file
+
+    // next extract the matching object
+    // usually this should be the next one in the file
+    // but in case it's not we find the match and remove it from
+    // the array. this should be pretty close to o(n) because we're
+    // shortening the array each time. plus the match *should* be at the
+    // top.
+    //
+    // goes to o(n^2) if there are a lot of misses
+
+    let matchIndex = rows.findIndex(d => {
+      return fileid==d[0] && stusab == d[2] && logrecno == d[5]
+    })
+
+    // if there wasn't a match, go to the next row
+    if (matchIndex == -1) {
+      continue
+    }
+
+    // remove the matching rows
+    let row = rows.splice(matchIndex, 1)
+
+    // remove the indexing columns
+    row.splice(0,6)
+
+    // if it's the header row, rename the variables based on data type
+    if (i == 0) {
+      row = row.map(d => d+dataType)
+    }
+
+    // append the row from the news data to the end of the row of existing data
+    data[i].concat(row)
+  }
 }
-progressBar.stop()
 
 
 
+
+
+// write it out to a big file`
 const newFilename = 'wide.csv'
 const newCsv =  d3.csvFormat(data)
 fs.writeFileSync(`${outputPath}${newFilename}`, newCsv ,'utf8')
 
-function columnRenamer(d, type) {
-  if (['FILEID','STUSAB', 'CHARITER','LOGRECNO'].find(d) != -1) {
-    return d+type
-  } else {
-    return d
-  }
-)
-
-function objectColumnsRenamer(d, type) {
-  let keys = Object.keys()
-  let values = Object.values()
-  keys = keys.map(k => columnRenamer(k, type))
-  return _.zipObject(keys, values)
-}
 
 
