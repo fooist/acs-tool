@@ -2,6 +2,7 @@ const fs = require('fs')
 const cliProgress = require('cli-progress')
 const d3 = require('d3')
 const _ = require('lodash')
+const Papa = require('papaparse')
 
 // cli parameters
 const year = process.argv[2]
@@ -45,8 +46,8 @@ console.log(dataFiles)
 const progressBar = new cliProgress.SingleBar({etaBuffer:10}, cliProgress.Presets.shades_classic)
 
 // display the bar
-console.log(`processing ${dataFiles.length} data files...`)
-progressBar.start(dataFiles.length,0)
+console.log(`processing ${dataFiles.length * 1000} data files...`)
+//progressBar.start(100000,0)
 
 
 // loop through the rows of each file to combine rows
@@ -54,15 +55,24 @@ for (filename of dataFiles) {
   const hText = fs.readFileSync(headerPath + filename, 'latin1')
   const dText = fs.readFileSync(inputPath + filename, 'latin1')
   const dataType = filename.slice(0,1)
+
   // rows is a variable because we'll be popping things out of it
-  let rows = d3.csvParseRows(hText + dText)
+  let header = Papa.parse(hText)
 
   // for the first file (geography) just make it the dataset
   if (data.length == 0) {
-    data = rows
+    data.push(header)
+    Papa.parse(dText, {step: function(results, parser) {
+        data.push(results.data)
+        progressBar.increment()
+        console.log(results.data)
+    }, header: false
+  })
     continue // skip the rest of the loop
   }
 
+
+/*
   for (i in data) {
 
     // get the keys to match
@@ -101,7 +111,7 @@ for (filename of dataFiles) {
 
     // append the row from the news data to the end of the row of existing data
     data[i].concat(row)
-  }
+  }*/
 }
 
 
