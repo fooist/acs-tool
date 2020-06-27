@@ -25,7 +25,8 @@ try {
 
 
 const dataFiles = fs.readdirSync(dataPath)
-  .filter(d => d.endsWith('.txt'))
+  .filter(d => /.*(txt|csv)$/.test(d))
+  .filter(d => /^g.*txt$/.test(d) == false)
 //console.log(dataFiles.length)
 
 
