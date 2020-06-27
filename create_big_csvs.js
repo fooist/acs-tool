@@ -25,7 +25,11 @@ try {
 
 
 const dataFiles = fs.readdirSync(dataPath)
-  .filter(d => d.endsWith('.txt'))
+  .filter(d => {
+	  let isNonGeoCSV = d.endsWith('.txt') && !d.startsWith('g')
+	  let isGeoCSV = d.endsWith('.csv') && d.startsWith('g')
+	  return (isNonGeoCSV||isGeoCSV)
+  })
 //console.log(dataFiles.length)
 
 
