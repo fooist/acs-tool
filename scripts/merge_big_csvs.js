@@ -45,9 +45,6 @@ console.log(dataFiles)
 // set up a progress bar to measure based on # of files including geo
 const progressBar = new cliProgress.SingleBar({etaBuffer:10}, cliProgress.Presets.shades_classic)
 
-// display the bar
-console.log(`processing ${dataFiles.length * 1000} data files...`)
-//progressBar.start(100000,0)
 
 
 // loop through the rows of each file to combine rows
@@ -57,21 +54,29 @@ for (filename of dataFiles) {
   const dataType = filename.slice(0,1)
 
   // rows is a variable because we'll be popping things out of it
-  let header = Papa.parse(hText)
-
+  let header = Papa.parse(hText, {header: false}).data[0]
+  let rows = Papa.parse(dText, {header: false}).data
+  // console.log(rows.slice(0,5))
   // for the first file (geography) just make it the dataset
   if (data.length == 0) {
     data.push(header)
-    Papa.parse(dText, {step: function(results, parser) {
-        data.push(results.data)
-        progressBar.increment()
-        console.log(results.data)
-    }, header: false
-  })
-    continue // skip the rest of the loop
+    console.log(header)
+    // display the bar
+    console.log(`processing ${dataFiles.length} data files`)// with ${dataRows} rows each ...`)
+    progressBar.start(dataFiles.length, 0)
+    data.concat(rows)
+  } else {
+    // for subsequent files
+    // append the header to data[0]
+    data[0] = data[0].concat(header.slice(6))
+
+    for (let i=1; i<data.length; i++) {
+      data[i] = data[i].concat(rows[i-1].slice(6))
+    }
   }
 
-
+  progressBar.increment()
+}
 /*
   for (i in data) {
 
@@ -112,12 +117,12 @@ for (filename of dataFiles) {
     // append the row from the news data to the end of the row of existing data
     data[i].concat(row)
   }*/
-}
 
 
 
-
-
+progressBar.stop()
+console.log('write out')
+console.log(data.length)
 // write it out to a big file`
 const newFilename = 'wide.csv'
 const newCsv =  d3.csvFormat(data)
