@@ -45,7 +45,7 @@ console.log(dataFiles)
 // set up a progress bar to measure based on # of files including geo
 const progressBar = new cliProgress.SingleBar({etaBuffer:10}, cliProgress.Presets.shades_classic)
 
-
+progressBar.start(dataFiles.length, 0)
 
 // loop through the rows of each file to combine rows
 for (filename of dataFiles) {
@@ -55,34 +55,8 @@ for (filename of dataFiles) {
 
   let header = d3.csvParseRows(hText)[0]
   let rows = d3.csvParseRows(dText)
-
-  if (data.length == 0) {
-    // for the first file (geography) just make it the dataset
-    data.push(header)
-    console.log(header)
-    console.log(data)
-    // display the bar
-    console.log(`processing ${dataFiles.length} data files`)// with ${dataRows} rows each ...`)
-    progressBar.start(dataFiles.length, 0)
-    data = data.concat(rows)
-  } else {
-    // for subsequent files
-    //
-    // remap the header names
-    header = header.slice(6).map(d => d+dataType)
-    // append the header to data[0]
-    data[0] = data[0].concat(header)
-
-    // loop through the rest
-    // later on we'll add some safety checking back
-    for (let i=1; i<data.length; i++) {
-      let newData = rows[i-1].slice(6)
-
-      // HEAP OVERRUNS AT 40 files
-      // data[i] = data[i].concat(newData)
-      // data[i].push(...newData) // LEAD TO HEAP overrun use push to reduce cost of concat
-    }
-  }
+  rows.unshift(header)
+  data.push(rows)
 
   progressBar.increment()
 }
