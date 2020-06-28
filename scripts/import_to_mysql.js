@@ -2,9 +2,10 @@ const fs = require('fs')
 const cliProgress = require('cli-progress')
 const d3 = require('d3')
 const _ = require('lodash')
-const mysql = require('mysql')
+const mysql = require('mysql2/promise')
 const Papa = require('papaparse')
 
+"use strict"
 
 // use dotenv to add env variables
 require('dotenv').config()
@@ -26,21 +27,18 @@ const headerPath = `./data/processed/acs/${year}_${acsYears}_yr/headers/`
 
 // important variables
 let data = [] // the main dataset to be written out at the end
-const create_table_sql =`
-DROP TABLE IF EXISTS census_main;
-CREATE TABLE IF NOT EXISTS census_main (
+const createTable =`CREATE TABLE IF NOT EXISTS census_main (
   prikey bigint(20) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  file_type varchar(16) NOT NULL,
+  file_id varchar(16) NOT NULL,
   state_abbrev varchar(2) NOT NULL,
   data_year int(11) NOT NULL,
   logrecno varchar(8) NOT NULL,
   geoid varchar(255) NOT NULL UNIQUE KEY,
   data_object json DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-ALTER TABLE census_main
-  ADD UNIQUE KEY complete_logrecno (file_type, state_abbrev, data_year, logrecno);
-`.trim()
+`
+const createIndex = `ALTER TABLE census_main
+  ADD UNIQUE KEY complete_logrecno (file_id, state_abbrev, data_year, logrecno);`
 
 
 
@@ -53,34 +51,100 @@ const dbConfig = {
   database: process.env.DB_CATALOG
 }
 
-const connection = mysql.createConnection(dbConfig)
+async function main() {
+  // connect to the database
+  try { var connection = await mysql.createConnection(dbConfig) }
+  catch (e) { throw e }
+    // make sure the data table is there
+  try { await connection.execute(createTable) }
+  catch (e) { throw e }
 
-connection.connect()
-
-
-
-
-/*
-
-// get the list of datafiles, but put geography first
-const dataFiles = fs.readdirSync(inputPath)
-  .filter(d => d.endsWith('.csv')&& d != 'geography.csv')
-dataFiles.unshift('geography.csv')
-console.log(dataFiles)
+  // add a unique index for the logrecno fields if it's missing
+  try { await connection.execute(createIndex) }
+  catch (e) { /* nothing */ }
 
 
-// set up a progress bar to measure based on # of files including geo
-const progressBar = new cliProgress.SingleBar({etaBuffer:10}, cliProgress.Presets.shades_classic)
-
-progressBar.start(dataFiles.length, 0)
-
-
-
-// loop through the rows of each file to combine rows
-for (filename of dataFiles) {
-  const hText = fs.readFileSync(headerPath + filename, 'latin1')
-  const dText = fs.readFileSync(inputPath + filename, 'latin1')
-  const dataType = filename.slice(0,1)
+  // get the list of datafiles, but put geography first
+  const dataFiles = fs.readdirSync(inputPath)
+    .filter(d => d.endsWith('.csv')&& d != 'geography.csv')
+  dataFiles.unshift('geography.csv')
 
 
-*/
+  // set up a progress bar to measure based on # of files including geo
+  const progressBar = new cliProgress.SingleBar({etaBuffer:40000}, cliProgress.Presets.shades_classic)
+
+  // loop through the rows of each file to combine rows
+  for (i in  dataFiles) {
+    const filename = dataFiles[i]
+    const hText = fs.readFileSync(headerPath + filename, 'latin1')
+    const dText = fs.readFileSync(inputPath + filename, 'latin1')
+    const dataType = filename.slice(0,1)
+
+    let header = d3.csvParseRows(hText)[0].map(d => d.toLowerCase())
+    let data = d3.csvParseRows(dText)
+
+    if (dataType == 'g') {
+      // geography file should be first and is used to
+      // populate the table
+      progressBar.start(dataFiles.length * data.length, 0)
+
+      for (datum of data) {
+        datum = _.zipObject(header, datum)
+        let fileId = datum.fileid
+        let stateAbbrev = datum.stusab
+        let logrecno = datum.logrecno
+        let dataYear = year
+        let geoid = datum.geoid
+        let dataObject = JSON.stringify(datum)
+        let q = `REPLACE INTO census_main
+                 (file_id, state_abbrev, data_year, logrecno, geoid, data_object)
+                 VALUES (?, ?, ?, ?, ?, ?);`
+        try {
+          let [results, field] = await connection.execute(q,
+            [fileId, stateAbbrev, dataYear, logrecno, geoid, dataObject])
+        } catch (e) {
+          console.log(e)
+          process.exit()
+        }
+        progressBar.increment()
+      }
+    } else {
+      // the other files should be used for updating
+      let headerKey = header.slice(0, 6)
+      //console.log(header)
+      header = header.slice(6)
+      header = header.map(d => d + dataType)
+      for (datum of data) {
+        let datumKey = datum.slice(0, 6)
+        let key = _.zipObject(headerKey, datumKey)
+        datum = _.zipObject(header, datum.slice(6))
+        let fileId = key.fileid
+        let stateAbbrev = key.stusab
+        let logrecno = key.logrecno
+        let dataYear = year
+        let geoid = key.geoid
+        let dataObject = JSON.stringify(datum)
+        // console.log(dataObject)
+        let q = `UPDATE census_main SET
+                 data_object = JSON_MERGE(data_object, ?)
+                 WHERE file_id = ? AND state_abbrev = ? AND data_year = ? AND logrecno = ?`
+        try {
+          let [results, fields] = await connection.execute(q,
+            [dataObject, fileId, stateAbbrev, dataYear, logrecno])
+        } catch {
+          console.log(e)
+        }
+          progressBar.increment()
+
+      }
+
+    }
+  }
+
+  progressBar.stop()
+  try { await connection.end() }
+  catch (e) { console.log(e) }
+
+}
+
+main()
