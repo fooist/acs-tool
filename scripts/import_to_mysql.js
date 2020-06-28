@@ -27,9 +27,11 @@ const headerPath = `./data/processed/acs/${year}_${acsYears}_yr/headers/`
 
 // important variables
 let data = [] // the main dataset to be written out at the end
+// TODO: Should I normalize the data? Will slow things
 const createTable =`CREATE TABLE IF NOT EXISTS census_main (
   prikey bigint(20) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   file_id varchar(16) NOT NULL,
+  file_type varchar(16) NOT NULL,
   state_abbrev varchar(2) NOT NULL,
   data_year int(11) NOT NULL,
   logrecno varchar(8) NOT NULL,
@@ -71,7 +73,7 @@ async function main() {
 
 
   // set up a progress bar to measure based on # of files including geo
-  const progressBar = new cliProgress.SingleBar({etaBuffer:40000}, cliProgress.Presets.shades_classic)
+  const progressBar = new cliProgress.SingleBar({etaBuffer:1000}, cliProgress.Presets.shades_classic)
 
   // loop through the rows of each file to combine rows
   for (i in  dataFiles) {
@@ -79,13 +81,14 @@ async function main() {
     const hText = fs.readFileSync(headerPath + filename, 'latin1')
     const dText = fs.readFileSync(inputPath + filename, 'latin1')
     const dataType = filename.slice(0,1)
-
+    const fileType = acsYears + '-year' // this is more readable than the census
     let header = d3.csvParseRows(hText)[0].map(d => d.toLowerCase())
     let data = d3.csvParseRows(dText)
 
     if (dataType == 'g') {
       // geography file should be first and is used to
       // populate the table
+      console.log(`begin processing ${dataFiles.length} files of ${data.length} rows`)
       progressBar.start(dataFiles.length * data.length, 0)
 
       for (datum of data) {
@@ -95,13 +98,14 @@ async function main() {
         let logrecno = datum.logrecno
         let dataYear = year
         let geoid = datum.geoid
-        let dataObject = JSON.stringify(datum)
+        let dataObject = JSON.stringify([datum])
+        //console.log(dataObject); process.exit()
         let q = `REPLACE INTO census_main
-                 (file_id, state_abbrev, data_year, logrecno, geoid, data_object)
-                 VALUES (?, ?, ?, ?, ?, ?);`
+                 (file_id, file_type, state_abbrev, data_year, logrecno, geoid, data_object)
+                 VALUES (?, ?, ?, ?, ?, ?, ?);`
         try {
           let [results, field] = await connection.execute(q,
-            [fileId, stateAbbrev, dataYear, logrecno, geoid, dataObject])
+            [fileId, fileType, stateAbbrev, dataYear, logrecno, geoid, dataObject])
         } catch (e) {
           console.log(e)
           process.exit()
@@ -126,13 +130,14 @@ async function main() {
         let dataObject = JSON.stringify(datum)
         // console.log(dataObject)
         let q = `UPDATE census_main SET
-                 data_object = JSON_MERGE(data_object, ?)
-                 WHERE file_id = ? AND state_abbrev = ? AND data_year = ? AND logrecno = ?`
+                 data_object = JSON_ARRAY_APPEND(data_object, "$[0]", ?)
+                 WHERE file_id = ? AND file_type = ? AND state_abbrev = ? AND data_year = ? AND logrecno = ?`
         try {
           let [results, fields] = await connection.execute(q,
-            [dataObject, fileId, stateAbbrev, dataYear, logrecno])
-        } catch {
+            [dataObject, fileId, fileType, stateAbbrev, dataYear, logrecno])
+        } catch (e) {
           console.log(e)
+          process.exit()
         }
           progressBar.increment()
 
