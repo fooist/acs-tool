@@ -53,25 +53,31 @@ for (filename of dataFiles) {
   const dText = fs.readFileSync(inputPath + filename, 'latin1')
   const dataType = filename.slice(0,1)
 
-  // rows is a variable because we'll be popping things out of it
-  let header = Papa.parse(hText, {header: false}).data[0]
-  let rows = Papa.parse(dText, {header: false}).data
-  // console.log(rows.slice(0,5))
-  // for the first file (geography) just make it the dataset
+  let header = d3.csvParseRows(hText)[0]
+  let rows = d3.csvParseRows(dText)
+
   if (data.length == 0) {
+    // for the first file (geography) just make it the dataset
     data.push(header)
     console.log(header)
+    console.log(data)
     // display the bar
     console.log(`processing ${dataFiles.length} data files`)// with ${dataRows} rows each ...`)
     progressBar.start(dataFiles.length, 0)
-    data.concat(rows)
+    data = data.concat(rows)
   } else {
     // for subsequent files
+    //
+    // remap the header names
+    header = header.slice(6).map(d => d+dataType)
     // append the header to data[0]
-    data[0] = data[0].concat(header.slice(6))
+    data[0] = data[0].concat(header)
 
+    // loop through the rest
+    // later on we'll add some safety checking back
     for (let i=1; i<data.length; i++) {
-      data[i] = data[i].concat(rows[i-1].slice(6))
+      let newData = rows[i-1].slice(6)
+      data[i].push(...newData) // use push to reduce cost of concat
     }
   }
 
@@ -122,10 +128,10 @@ for (filename of dataFiles) {
 
 progressBar.stop()
 console.log('write out')
-console.log(data.length)
+console.log(data.length, 'rows')
 // write it out to a big file`
 const newFilename = 'wide.csv'
-const newCsv =  d3.csvFormat(data)
+const newCsv =  d3.csvFormatRows(data)
 fs.writeFileSync(`${outputPath}${newFilename}`, newCsv ,'utf8')
 
 
