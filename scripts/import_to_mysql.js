@@ -92,13 +92,15 @@ async function main() {
       progressBar.start(dataFiles.length * data.length, 0)
 
       for (datum of data) {
-        datum = _.zipObject(header, datum)
-        let fileId = datum.fileid
-        let stateAbbrev = datum.stusab
-        let logrecno = datum.logrecno
+        // using arrays of values because merging objects each time is o(n^2)
+        datum = _.zip(header, datum)
+        let fileId = datum.find(d => d[0] == 'fileid')[1]
+        let fileType = `${acsYears}-year`
+        let stateAbbrev = datum.find(d => d[0] == 'stusab')[1]
+        let logrecno = datum.find(d => d[0] == 'logrecno')[1]
         let dataYear = year
-        let geoid = datum.geoid
-        let dataObject = JSON.stringify([datum])
+        let geoid = datum.find(d => d[0] == 'geoid')[1]
+        let dataObject = JSON.stringify(datum)
         //console.log(dataObject); process.exit()
         let q = `REPLACE INTO census_main
                  (file_id, file_type, state_abbrev, data_year, logrecno, geoid, data_object)
@@ -108,6 +110,7 @@ async function main() {
             [fileId, fileType, stateAbbrev, dataYear, logrecno, geoid, dataObject])
         } catch (e) {
           console.log(e)
+          console.log([fileId, fileType, stateAbbrev, dataYear, logrecno, geoid, dataObject])
           process.exit()
         }
         progressBar.increment()
@@ -121,7 +124,7 @@ async function main() {
       for (datum of data) {
         let datumKey = datum.slice(0, 6)
         let key = _.zipObject(headerKey, datumKey)
-        datum = _.zipObject(header, datum.slice(6))
+        datum = _.zip(header, datum.slice(6))
         let fileId = key.fileid
         let stateAbbrev = key.stusab
         let logrecno = key.logrecno
@@ -130,7 +133,7 @@ async function main() {
         let dataObject = JSON.stringify(datum)
         // console.log(dataObject)
         let q = `UPDATE census_main SET
-                 data_object = JSON_ARRAY_APPEND(data_object, "$[0]", ?)
+                 data_object = JSON_MERGE_PRESERVE(data_object, ?)
                  WHERE file_id = ? AND file_type = ? AND state_abbrev = ? AND data_year = ? AND logrecno = ?`
         try {
           let [results, fields] = await connection.execute(q,
@@ -147,6 +150,9 @@ async function main() {
   }
 
   progressBar.stop()
+
+
+
   try { await connection.end() }
   catch (e) { console.log(e) }
 
