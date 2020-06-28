@@ -77,7 +77,10 @@ for (filename of dataFiles) {
     // later on we'll add some safety checking back
     for (let i=1; i<data.length; i++) {
       let newData = rows[i-1].slice(6)
-      data[i].push(...newData) // use push to reduce cost of concat
+
+      // HEAP OVERRUNS AT 40 files
+      // data[i] = data[i].concat(newData)
+      // data[i].push(...newData) // LEAD TO HEAP overrun use push to reduce cost of concat
     }
   }
 
@@ -130,9 +133,9 @@ progressBar.stop()
 console.log('write out')
 console.log(data.length, 'rows')
 // write it out to a big file`
-const newFilename = 'wide.csv'
-const newCsv =  d3.csvFormatRows(data)
-fs.writeFileSync(`${outputPath}${newFilename}`, newCsv ,'utf8')
+//const newFilename = 'wide.csv'
+//const newCsv =  d3.csvFormatRows(data)
+//fs.writeFileSync(`${outputPath}${newFilename}`, newCsv ,'utf8')
 
 
 
