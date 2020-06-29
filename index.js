@@ -1,3 +1,4 @@
 const config = require('./config.js')
+const app = require('./lib/app')
 
-module.exports = {config}
+module.exports = {app, config}
