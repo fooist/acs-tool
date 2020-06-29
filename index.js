@@ -1,4 +1,3 @@
-const config = require('./config.js')
-const app = require('./lib/app')
+const router = require('./lib/router')
 
-module.exports = {app, config}
+module.exports = router

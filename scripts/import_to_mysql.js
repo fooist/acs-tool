@@ -155,7 +155,7 @@ async function main() {
 
   try { await connection.end() }
   catch (e) { console.log(e) }
-
+  console.log('finished')
 }
 
 main()
