@@ -19,7 +19,7 @@ CREATE TABLE `census_main` (
   `logrecno` varchar(8) NOT NULL,
   `geoid` varchar(255) NOT NULL,
   `data_object` json DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 --
 -- Indexes for table `census_main`

@@ -5,3 +5,6 @@
 - [ ] BUILD THE WEBSITE
 - [ ] Add percentages to the variables
 - [ ] refactor data loading scripts into testable functions
+- [ ] write scripts for properly handling metadata from web files
+- [ ] move all the acs-related stuff into a sub-directory of scripts
+- [ ] write omnibus scripts to do all steps of a given year

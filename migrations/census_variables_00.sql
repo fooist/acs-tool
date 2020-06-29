@@ -1,0 +1,1 @@
+CREATE TABLE `census_acs`.`census_variables` ( `id` INT NOT NULL AUTO_INCREMENT , `name` VARCHAR(16) NOT NULL , `label` VARCHAR(255) NOT NULL , `concept` VARCHAR(1024) NOT NULL , `data_type` ENUM('integer','string','fips','label') NULL , PRIMARY KEY (`id`)) ENGINE = MyISAM;
